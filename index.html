@@ -510,7 +510,7 @@ const QUOTES=[["Little by little, a little becomes a lot.","you, soon"],["Every 
 function seed(){
  const L=(id,name,short,bal,color)=>({id,name,short,recorded:C(bal),color,verified:true});
  const loans=[L('t1','TikTok Trust Loan #1','Trust #1',2216.68,'#E58FA8'),L('t2','TikTok Trust Loan #2','Trust #2',632,'#F0AFC1'),L('bg','BillEase Grocery','BE Grocery',2335.71,'#8DA65C'),L('bc','BillEase Cash','BE Cash',9755.04,'#6C8A43'),L('jh','JuanHand','JuanHand',4996,'#D47F98'),L('tp','TikTok PayLater','PayLater',1187.21,'#A9C674'),L('ac','Atome Cash','Atome Cash',583,'#EBA0B5'),L('au','Atome Unbilled','Atome Unbilled',1128.19,'#B7D08A'),
-  {id:'lap',name:'Laptop financing',short:'Laptop',recorded:null,color:'#9DBB68',verified:false,laptop:true,monthly:C(6081),dueDay:15,months:24,start:'2026-05'}];
+  {id:'lap',name:'Laptop financing',short:'Laptop',recorded:null,color:'#9DBB68',verified:false,laptop:true,monthly:C(6081),dueDay:15,months:24,start:'2026-06'}];
  const S=[];const s=(l,d,a,n='')=>S.push({id:'s'+(S.length+1),loanId:l,date:d,amount:C(a),note:n});
  s('bg','2026-11-16',778.57);s('t1','2026-11-29',1108.33);
  s('tp','2026-12-01',518.15);s('au','2026-12-05',1128.19,'tentative');s('t2','2026-12-12',105.33);s('jh','2026-12-12',2498);s('ac','2026-12-12',583);s('bg','2026-12-15',778.57);s('t1','2026-12-29',1108.33,'final');
@@ -518,7 +518,7 @@ function seed(){
  s('tp','2027-02-01',150.92,'final');s('t2','2027-02-12',105.33);s('t2','2027-03-12',105.33);s('t2','2027-04-12',105.33);s('t2','2027-05-12',105.33,'final');
  for(let i=0;i<12;i++){const k=addMonths('2026-12',i);s('bc',k+'-15',812.92,i===11?'final':'')}
  
- const st={v:1,savedAt:0,seq:0,startDate:'2026-11-13',settings:{weeklyBudget:620000,weekStart:1},loans,schedule:S,payments:[],purchases:[],migr:['lap15','lap24']};rebuildLaptop(st);return st;
+ const st={v:1,savedAt:0,seq:0,startDate:'2026-11-13',settings:{weeklyBudget:620000,weekStart:1},loans,schedule:S,payments:[],purchases:[],migr:['lap15','lap24','lapJune']};rebuildLaptop(st);return st;
 }
 const LKEY='debt-overview-v1';
 let state,art=null,dirty=false,pubT=null;
@@ -547,6 +547,12 @@ function rebuildLaptop(S){
   state.migr.push('lap15');}
  if(!state.migr.includes('lap24')){const L=state.loans.find(l=>l.laptop);if(L){L.months=24;L.start='2026-05';L.dueDay=15;L.monthly=L.monthly||608100;rebuildLaptop(state)}state.migr.push('lap24')}
  if(!state.migr.includes('salary')){if(!state.settings.weeklyBudget)state.settings.weeklyBudget=620000;state.settings.weekStart=1;state.migr.push('salary')}
+ if(!state.migr.includes('lapJune')){const L=state.loans.find(l=>l.laptop);if(L){
+  const old=state.schedule.filter(s=>s.loanId===L.id).sort((a,b)=>a.date.localeCompare(b.date));const nOf={};old.forEach((s,i)=>nOf[s.id]=i);
+  L.start='2026-06';state.schedule=state.schedule.filter(s=>s.loanId!==L.id);
+  for(let i=0;i<L.months;i++){const d=lapDate(L,i);state.schedule.push({id:'lap-'+mk(d),loanId:L.id,date:d,amount:L.monthly,note:i===L.months-1?'final':'',n:i+1})}
+  state.payments.forEach(p=>{if(p.loanId===L.id&&p.scheduleId&&nOf[p.scheduleId]!=null){const i=nOf[p.scheduleId];p.scheduleId='lap-'+mk(lapDate(L,i))}});
+  L.recorded=L.monthly*L.months;}state.migr.push('lapJune')}
  state.money=state.money||{cash:0,banks:[],updatedAt:0};state.moneyLog=state.moneyLog||[];
  state.weekly=state.weekly||[];state.weeklyLog=state.weeklyLog||[];
  if(!state.migr.includes('siblings')){if(!state.weekly.length)state.weekly=[{id:'w1',name:'Hash',amount:100000,color:'#D47F98'},{id:'w2',name:'Zak',amount:60000,color:'#8DA65C'},{id:'w3',name:'Lei',amount:45000,color:'#E7A0B5'},{id:'w4',name:'transfer fee',amount:2000,color:'#B7D08A',fee:true}];state.migr.push('siblings')}
@@ -945,7 +951,7 @@ function renderLaptop(){
  $('#lapTiles').innerHTML=L.items.map(s=>{const p=K.paidBy[s.id];const back=!p&&s.date<state.startDate;const over=!p&&!back&&s.date<K.t;const d=pd(s.date);const cur=!p&&nx&&s.id===nx.id;
   return `<button class="ltile ${p?'paid':''} ${back?'back':''} ${over?'over':''} ${cur?'cur':''}" ${p?`data-editpay="${p.id}"`:`data-lappay="${s.id}"`}><span class="ln">#${s.n||''}</span><span class="lm">${MS[d.getMonth()]} '${String(d.getFullYear()).slice(2)}</span><span class="ls">${p?'✓ '+fD(p.date):back?'tap to log':over?'overdue':cur?'next · '+fD(s.date):'due '+fD(s.date)}</span>${p&&p.amount!==s.amount?`<span class="lx">${pesoK(p.amount)}</span>`:''}</button>`}).join('');
  const tx=state.payments.filter(p=>p.loanId===L.id).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt-a.createdAt));
- $('#lapTx').innerHTML=tx.map(p=>{const s=state.schedule.find(x=>x.id===p.scheduleId);return `<div class="hrow ${p.voided?'void':''}" style="--c:${p.voided?'#ccc':'#8DA65C'};grid-template-columns:auto 1fr auto auto"><span class="no">#${String(p.receiptNo).padStart(4,'0')}</span><div><b>${fDL(p.date)}</b><small>${s?'month '+(s.n||'?')+' · '+MS[pd(s.date).getMonth()]+' '+pd(s.date).getFullYear():'extra payment'}${p.note?' · '+esc(p.note):''}${p.editedAt?' · edited':''}${p.voided?' · voided':''}</small></div><span class="amt">${peso(p.amount)}</span><span><button class="linkb" data-editpay="${p.id}">edit</button><button class="linkb" data-reprint="pay:${p.id}">receipt</button></span></div>`}).join('')||'<div class="empty">no laptop payments logged yet — start with May ♡</div>';
+ $('#lapTx').innerHTML=tx.map(p=>{const s=state.schedule.find(x=>x.id===p.scheduleId);return `<div class="hrow ${p.voided?'void':''}" style="--c:${p.voided?'#ccc':'#8DA65C'};grid-template-columns:auto 1fr auto auto"><span class="no">#${String(p.receiptNo).padStart(4,'0')}</span><div><b>${fDL(p.date)}</b><small>${s?'month '+(s.n||'?')+' · '+MS[pd(s.date).getMonth()]+' '+pd(s.date).getFullYear():'extra payment'}${p.note?' · '+esc(p.note):''}${p.editedAt?' · edited':''}${p.voided?' · voided':''}</small></div><span class="amt">${peso(p.amount)}</span><span><button class="linkb" data-editpay="${p.id}">edit</button><button class="linkb" data-reprint="pay:${p.id}">receipt</button></span></div>`}).join('')||'<div class="empty">no laptop payments logged yet — start with June ♡</div>';
  $('#lapTxTot').innerHTML=`<span>${tx.filter(p=>!p.voided).length} payments logged</span><b>${peso(paid)}</b>`;
 }
 function openLapPay(sid){
