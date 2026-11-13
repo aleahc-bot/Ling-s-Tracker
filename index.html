@@ -191,6 +191,14 @@ main{flex:1;min-height:0;padding:12px 26px 20px;position:relative}
 .ltile.cur{box-shadow:0 0 0 2.5px var(--deep) inset}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;font-weight:700;color:var(--ink2);margin-top:8px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-2px;margin-right:4px}
+.mrow2{display:flex;gap:12px;align-items:center}
+.mtot{display:flex;flex-direction:column;flex:none}.mtot .k{font-size:11px;font-weight:700;color:var(--ink2)}
+.mtot b{font-family:'Playfair Display';font-style:italic;font-size:24px;color:var(--moss)}
+.mlist{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.mi{background:#fff;border-radius:10px;padding:4px 9px;font-size:11.5px;display:flex;gap:6px;box-shadow:0 0 0 1.5px var(--sprout) inset}
+.mi span{color:var(--ink2);font-weight:700}.mi.cash{box-shadow:0 0 0 1.5px var(--rose) inset}
+.mcov{margin-top:7px;font-size:12px;font-weight:600;background:#fff;border-radius:10px;padding:6px 10px;color:var(--moss)}
+.mcov.neg{color:#b4536f;background:var(--blush)}
 /* ---------- calendar ---------- */
 #v-calendar{grid-template-columns:1fr 330px;gap:22px}
 .calcard{display:flex;flex-direction:column;padding:14px 16px}
@@ -306,7 +314,7 @@ table.lt{width:100%;border-collapse:separate;border-spacing:0 7px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--moss);color:#fff;padding:9px 16px;border-radius:99px;font-weight:700;font-size:13px;z-index:60;transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
 .empty{font-family:'Caveat';font-size:19px;color:var(--ink2);text-align:center;padding:14px}
-@media (max-width:1420px){#today{display:none}nav.tabs button{padding:8px 11px 7px;font-size:13.5px}.brand h1{font-size:38px}}
+@media (max-width:1420px){#today{display:none}.tools{gap:5px}.tools .chip{padding:7px 9px}nav.tabs button{padding:8px 11px 7px;font-size:13.5px}.brand h1{font-size:38px}}
 @media (max-width:1100px){
  body{overflow:auto}.app{height:auto;min-height:100vh;overflow:visible}
  header.top{flex-wrap:wrap}nav.tabs{order:3;width:100%;overflow-x:auto;padding:4px 2px 8px}
@@ -331,7 +339,7 @@ table.lt{width:100%;border-collapse:separate;border-spacing:0 7px}
    <button data-v="timeline" style="--r:-2deg">timeline</button>
    <button data-v="receipts" style="--r:-1.5deg">receipts</button>
   </nav>
-  <div class="tools"><span class="chip ghost" id="today"></span><button class="chip warn" id="flagchip" hidden></button><span class="chip" id="savechip">♡ ready</span><button class="chip" id="setbtn" title="settings">✿ settings</button></div>
+  <div class="tools"><span class="chip ghost" id="today"></span><button class="chip warn" id="flagchip" hidden></button><button class="chip" id="moneychip" title="cash & bank"></button><span class="chip" id="savechip">♡ ready</span><button class="chip" id="setbtn" title="settings">✿</button></div>
  </header>
  <main>
   <!-- BOARD -->
@@ -386,6 +394,7 @@ table.lt{width:100%;border-collapse:separate;border-spacing:0 7px}
    </div>
    <div class="col">
     <div class="stampwrap" style="transform:rotate(-.6deg);flex:1;min-height:0;display:flex"><div class="card stamp scroll" id="ciVerdict" style="background:var(--petal);flex:1"></div></div>
+    <div class="card" id="moneyCard" style="flex:none;padding:12px 16px;background:#F7FBEF"></div>
     <div class="card" id="ciStrip" style="flex:none"></div>
    </div>
    <div class="col">
@@ -509,7 +518,7 @@ function seed(){
  s('tp','2027-02-01',150.92,'final');s('t2','2027-02-12',105.33);s('t2','2027-03-12',105.33);s('t2','2027-04-12',105.33);s('t2','2027-05-12',105.33,'final');
  for(let i=0;i<12;i++){const k=addMonths('2026-12',i);s('bc',k+'-15',812.92,i===11?'final':'')}
  
- const st={v:1,savedAt:0,seq:0,startDate:'2026-11-13',settings:{weeklyBudget:0,weekStart:1},loans,schedule:S,payments:[],purchases:[],migr:['lap15','lap24']};rebuildLaptop(st);return st;
+ const st={v:1,savedAt:0,seq:0,startDate:'2026-11-13',settings:{weeklyBudget:620000,weekStart:1},loans,schedule:S,payments:[],purchases:[],migr:['lap15','lap24']};rebuildLaptop(st);return st;
 }
 const LKEY='debt-overview-v1';
 let state,art=null,dirty=false,pubT=null;
@@ -537,6 +546,8 @@ function rebuildLaptop(S){
    state.schedule.filter(s=>s.loanId===L.id&&!paidIds.has(s.id)).forEach(s=>{s.date=s.date.slice(0,8)+'15';s.note=s.note.replace(' · confirm date','')});}
   state.migr.push('lap15');}
  if(!state.migr.includes('lap24')){const L=state.loans.find(l=>l.laptop);if(L){L.months=24;L.start='2026-05';L.dueDay=15;L.monthly=L.monthly||608100;rebuildLaptop(state)}state.migr.push('lap24')}
+ if(!state.migr.includes('salary')){if(!state.settings.weeklyBudget)state.settings.weeklyBudget=620000;state.settings.weekStart=1;state.migr.push('salary')}
+ state.money=state.money||{cash:0,banks:[],updatedAt:0};state.moneyLog=state.moneyLog||[];
  state.weekly=state.weekly||[];state.weeklyLog=state.weeklyLog||[];
  if(!state.migr.includes('siblings')){if(!state.weekly.length)state.weekly=[{id:'w1',name:'Hash',amount:100000,color:'#D47F98'},{id:'w2',name:'Zak',amount:60000,color:'#8DA65C'},{id:'w3',name:'Lei',amount:45000,color:'#E7A0B5'},{id:'w4',name:'transfer fee',amount:2000,color:'#B7D08A',fee:true}];state.migr.push('siblings')}
 })();
@@ -611,7 +622,7 @@ function calc(){
  const fromJarW=wkPays.reduce((a,p)=>a+(p.fromJar||0),0);
  let jarLeft=Math.max(0,jarBal-depW+fromJarW);
  const dd=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
- const plan=sched.filter(s=>{if(s.date<ST)return false;const p=paidBy[s.id];return p?inW(p.date):true}).map(s=>{const use=Math.min(jarLeft,s.amount);jarLeft-=use;const need=s.amount-use;const w=Math.max(1,Math.ceil(dd(wS,s.date)/7));const st=Math.max(0,w-5);return {s,need,covered:use,w,st,per:need/(w-st),paid:!!paidBy[s.id]}});
+ const plan=sched.filter(s=>{if(s.date<ST)return false;const p=paidBy[s.id];return p?inW(p.date):true}).map(s=>{const use=Math.min(jarLeft,s.amount);jarLeft-=use;const need=s.amount-use;const w=Math.max(1,Math.floor(dd(wS,s.date)/7)+1);const st=Math.max(0,w-5);return {s,need,covered:use,w,st,per:need/(w-st),paid:!!paidBy[s.id]}});
  const target=Math.round(plan.filter(x=>x.st===0).reduce((a,x)=>a+x.per,0));
  const directW=wkPays.filter(p=>p.scheduleId).reduce((a,p)=>a+p.amount-(p.fromJar||0),0);
  const setAsideDone=depW+directW;const stillToSave=Math.max(0,target-setAsideDone);
@@ -626,17 +637,21 @@ function calc(){
  const flags=[];
  loans.forEach(l=>{if(l.counted&&l.diff!==0)flags.push({loan:l,text:`<b>${esc(l.name)}</b>: remaining balance ${peso(l.remaining)} vs scheduled installments ${peso(l.unpaidSum)} — ${l.diff>0?'schedule is '+peso(l.diff)+' short':'schedule is '+peso(-l.diff)+' more than the balance'}.`})});
  upcoming.filter(s=>s.date<t).forEach(s=>flags.push({text:`<b>${esc(loanById[s.loanId]?.name)}</b> ${peso(s.amount)} was due ${fDL(s.date)} and isn't marked paid yet.`}));
+ const FREE=budget-wkDebt-wkBuy-depW-famW-stillToSave-famLeft;
+ if(budget&&FREE<0)flags.push({text:`<b>This week is short by ${peso(-FREE)}.</b> Salary ${peso(budget)} − siblings ${peso(famTotal)} = ${peso(budget-famTotal)}, but this week's dues and spending need more. If a due is already paid from savings, tick “from my savings jar”; otherwise plan which one to move or cover.`});
  const curK=mk(t);const cur=months[curK]||{debt:0,lap:0,paid:0,lapPaid:0};
  return {t,loanById,paidBy,sched,loans,V,total,paidTotal,orig,unpaidV,upcoming,months,mlist,avg,peak,wS,wE,wkPays,wkBuys,wkDebt,wkBuy,wkDue,budget,
+  afterSibs:budget-famTotal,short:budget?Math.max(0,-FREE):0,tightWeeks:budget?next4.map(v=>v>budget-famTotal):[],bigDue:plan.filter(x=>x.st===0&&!x.paid).sort((a,b)=>b.per-a.per)[0]||null,
   avail:budget-wkDebt-wkBuy-depW-famW,depW,famLog,famSentBy,famW,famTotal,famLeft,jarBal,plan,target,setAsideDone,stillToSave,next4,todaySpent,daysLeft,dd,
-  free:budget-wkDebt-wkBuy-depW-famW-stillToSave-famLeft,dailyAllow:budget?Math.round((budget-wkDebt-wkBuy-depW-famW-stillToSave-famLeft+todaySpent)/daysLeft):0,flags,curK,cur,debtFree:unpaidV.length?unpaidV[unpaidV.length-1].date:null,
+  free:FREE,dailyAllow:budget?Math.round((budget-wkDebt-wkBuy-depW-famW-stillToSave-famLeft+todaySpent)/daysLeft):0,flags,curK,cur,debtFree:unpaidV.length?unpaidV[unpaidV.length-1].date:null,
   active:V.filter(l=>!l.done).length,completed:V.filter(l=>l.done).length,lap:loans.find(l=>l.laptop)};
 }
 
 /* ---------------- render ---------------- */
 let K;
 function render(){K=calc();renderHeader();renderBoard();renderWeek();renderLaptop();renderCal();renderLoans();renderTimeline();renderReceipts()}
-function renderHeader(){
+function moneyTotal(){const m=state.money;return (m.cash||0)+m.banks.reduce((a,b)=>a+(b.amount||0),0)}
+function renderHeader(){const mc=$('#moneychip');mc.textContent=state.money.updatedAt?'₱'+(moneyTotal()/100).toLocaleString('en-PH',{maximumFractionDigits:0})+' on hand':'+ my money';
  const d=new Date();$('#today').textContent=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' · '+MS[d.getMonth()]+' '+d.getDate();
  const fc=$('#flagchip');fc.hidden=!K.flags.length;fc.textContent='⚠ '+K.flags.length+' to check';
 }
@@ -681,9 +696,9 @@ function renderBoard(){
 }
 function weekHTML(){
  const b=K.budget;
- const head=b?`<div><div class="hand" style="font-size:20px;color:var(--deep);line-height:1">free to spend this week</div><div class="big">${peso(K.free)}</div><div class="muted" style="font-size:11.5px;font-weight:600">${fD(K.wS)} – ${fD(K.wE)} · budget ${peso(b)} · after savings &amp; siblings</div></div>`
-  :`<div><div class="hand" style="font-size:20px;color:var(--deep);line-height:1">this week</div><div class="serif" style="font-size:16px;color:var(--moss);margin:4px 0">set aside <b>${peso(K.stillToSave)}</b> for upcoming dues and send <b>${peso(K.famLeft)}</b> to your siblings — add your weekly budget so I can tell you what's free ♡</div></div>`;
- return head+`<div style="align-self:start"><button class="btn tiny ${b?'soft':'pink'}" data-act="settings">${b?'edit':'set budget'}</button></div>
+ const head=b?`<div><div class="hand" style="font-size:20px;color:var(--deep);line-height:1">free to spend this week</div><div class="big" style="${K.free<0?'color:#b4536f':''}">${K.free<0?'short '+peso(-K.free):peso(K.free)}</div><div class="muted" style="font-size:11.5px;font-weight:600">salary ${peso(b)} (paid ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][state.settings.weekStart]}) − siblings ${peso(K.famTotal)} = <b>${peso(K.afterSibs)}</b> · then debts &amp; savings</div></div>`
+  :`<div><div class="hand" style="font-size:20px;color:var(--deep);line-height:1">this week</div><div class="serif" style="font-size:16px;color:var(--moss);margin:4px 0">set aside <b>${peso(K.stillToSave)}</b> for upcoming dues and send <b>${peso(K.famLeft)}</b> to your siblings — add your weekly salary so I can tell you what's free ♡</div></div>`;
+ return head+`<div style="align-self:start"><button class="btn tiny ${b?'soft':'pink'}" data-act="settings">${b?'edit':'set salary'}</button></div>
  ${b?`<div style="grid-column:1/-1;margin-top:6px"><div class="bar"><i style="width:${Math.max(0,Math.min(100,(b-K.free)/b*100))}%;background:linear-gradient(90deg,var(--rose),var(--deep))"></i></div></div>`:''}
  <div class="rows"><div class="mini"><div class="k">spent (debts · buys · sibs)</div><div class="v">${peso(K.wkDebt+K.wkBuy+K.famW)}</div></div><div class="mini"><div class="k">set aside ✓</div><div class="v">${peso(K.setAsideDone)}</div></div><div class="mini" style="background:var(--blush)" title="savings ${peso(K.stillToSave)} · siblings ${peso(K.famLeft)}"><div class="k">still to save + send</div><div class="v">${peso(K.stillToSave+K.famLeft)}</div></div><div class="mini"><div class="k">ok to spend / day</div><div class="v">${b?peso(Math.max(0,Math.round(K.free/K.daysLeft))):'—'}</div></div></div>`;
 }
@@ -881,9 +896,10 @@ function openExtra(){
 }
 function openSettings(){
  const s=state.settings;
- modal(`<h3>settings</h3><div class="sub">your weekly budget &amp; backups</div><div class="flagbox" style="background:#EEF5E1">Your entries are saved in <b>this browser</b> only. Download a backup now and then — and use it to move your board to another phone or laptop.</div>
- <form class="form" id="setForm"><div class="row2"><label>weekly budget (₱)<input id="wb" type="number" step="0.01" min="0" value="${s.weeklyBudget?(s.weeklyBudget/100).toFixed(2):''}" placeholder="e.g. 3000"></label>
- <label>week starts on<select id="wst"><option value="1" ${s.weekStart==1?'selected':''}>Monday</option><option value="0" ${s.weekStart==0?'selected':''}>Sunday</option></select></label></div>
+ modal(`<h3>settings</h3><div class="sub">your weekly salary &amp; backups</div><div class="flagbox" style="background:#EEF5E1">Your entries are saved in <b>this browser</b> only. Download a backup now and then — and use it to move your board to another phone or laptop.</div>
+ <form class="form" id="setForm"><div class="row2"><label>weekly salary (₱)<input id="wb" type="number" step="0.01" min="0" value="${s.weeklyBudget?(s.weeklyBudget/100).toFixed(2):''}" placeholder="e.g. 6200"></label>
+ <label>payday (your week starts here)<select id="wst">${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i)=>`<option value="${i}" ${s.weekStart==i?'selected':''}>${d}</option>`).join('')}</select></label></div>
+ <div class="flagbox" style="background:#EEF5E1">Each week: salary − siblings (${peso(state.weekly.reduce((a,x)=>a+x.amount,0))}) − debts &amp; savings for upcoming dues = what's free to spend.</div>
  <div class="acts"><button class="btn">save</button></div></form>
  <hr style="border:0;border-top:1.5px dashed var(--rose);margin:14px 0">
  <div class="form"><label>backup (copy &amp; keep somewhere safe, or paste one here to restore)<textarea id="bk" rows="3" class="fld" style="font-family:'Space Mono';font-size:11px"></textarea></label>
@@ -989,19 +1005,19 @@ let ciDate=null,ciNeed='need',ciMood=null,ciMoodFor=null,sampler=null,bestieBusy
 (async()=>{if(!(window.claude&&window.claude.use))return;
  try{if(window.claude&&window.claude.use)sampler=await window.claude.use('sample')}catch(e){} if(K)renderWeek();})();
 const MOODS=['great ✿','okay ~','meh','stressed !','treat day ☆'];
-const LV={free:['no-spend day ✿','#8DA65C'],comfy:['pocket-friendly ✿','#8DA65C'],ok:["valid — you're on track ♡",'#9DBB68'],pinch:['a little pinch','#E7A0B5'],ouch:['ouch — that hurts the pocket','#D47F98'],nobudget:['set a weekly budget first','#937f89']};
+const LV={free:['no-spend day ✿','#8DA65C'],comfy:['pocket-friendly ✿','#8DA65C'],ok:["valid — you're on track ♡",'#9DBB68'],pinch:['a little pinch','#E7A0B5'],ouch:['ouch — that hurts the pocket','#D47F98'],nobudget:['add your weekly salary first','#937f89']};
 function dayItems(d){return state.purchases.filter(p=>!p.voided&&p.date===d)}
 function judge(d){
  const items=dayItems(d),spent=items.reduce((a,p)=>a+p.amount,0),wants=items.filter(p=>p.need==='want').reduce((a,p)=>a+p.amount,0);
  const b=K.budget;const allow=d===K.t?K.dailyAllow:(b?Math.round((b-K.target)/7):0);
  const tips=[];let level;
- if(!b){level='nobudget';tips.push('Add your weekly budget in ✿ settings so I can tell you if a day was valid or not.')}
+ if(!b){level='nobudget';tips.push('Add your weekly salary in ✿ settings so I can tell you if a day was valid or not.')}
  else{const r=allow>0?spent/allow:(spent>0?9:0);level=spent===0?'free':r<=.6?'comfy':r<=1?'ok':r<=1.4?'pinch':'ouch';
   if(allow<=0)tips.push(`This week is tight — after setting aside ${peso(K.stillToSave)} for your dues, there's no extra room. Needs only for now ♡`);}
  if(spent&&wants>spent*.5)tips.push(`${peso(wants)} of this day was wants. Totally okay sometimes — skipping one tomorrow keeps you on track.`);
  const big=items.reduce((a,p)=>p.amount>(a?a.amount:0)?p:a,null);
  if(big&&allow>0&&big.amount>allow*.6&&items.length>1)tips.push(`“${esc(big.item)}” took the biggest bite (${peso(big.amount)}). Plan a lighter day after.`);
- if(b&&d===K.t&&spent>allow&&K.daysLeft>1)tips.push(`To balance it out, try to keep the rest of the week to about ${peso(Math.max(0,Math.round(K.free/(K.daysLeft-1))))} a day.`);
+ if(b&&d===K.t&&spent>allow&&K.daysLeft>1&&K.free>0)tips.push(`To balance it out, try to keep the rest of the week to about ${peso(Math.max(0,Math.round(K.free/(K.daysLeft-1))))} a day.`);
  if(b&&allow>0&&spent<allow*.8)tips.push(`You still have ${peso(allow-spent)} of this day's allowance — want to drop some in your savings jar?`);
  const nd=K.upcoming.find(s=>s.date>=K.t&&K.dd(K.t,s.date)<=7);
  if(nd)tips.push(`${esc(K.loanById[nd.loanId].name)} (${peso(nd.amount)}) is due ${fD(nd.date)} — ${K.stillToSave>0?'set aside '+peso(K.stillToSave)+' this week to stay covered.':"you're covered this week ♡"}`);
@@ -1033,6 +1049,8 @@ function renderWeek(){
  let streak=0;for(let x=new Date(pd(K.t));;x.setDate(x.getDate()-1)){if(state.checkins.some(c=>c.date===ds(x)))streak++;else break}
  $('#ciStrip').innerHTML=`<h2><span class="script">this</span> week <small>${streak?streak+'-day check-in streak ✿':'start a streak today ♡'}</small></h2><div class="strip">${days.map(x=>{const fut=x>K.t;const jj=fut?null:judge(x);const c=state.checkins.some(z=>z.date===x);
   return `<button class="sday ${x===d?'sel':''} ${fut?'fut':''}" ${fut?'disabled':''} data-ciday="${x}"><span class="dn">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][pd(x).getDay()]}</span><b>${pd(x).getDate()}</b><i style="background:${fut?'#eee':jj.color}"></i><span class="sp">${fut?'':pesoK(jj.spent)}</span>${c?'<span class="ck">✓</span>':''}</button>`}).join('')}</div>`;
+ // money
+ $('#moneyCard').innerHTML=moneyHTML();
  // family
  $('#famCard').innerHTML=`<h2><span class="script">siblings</span> ♡ <small>${pesoK(K.famW)} / ${pesoK(K.famTotal)} sent · <button class="linkb" data-act="famedit">edit</button></small></h2>
  <div class="fam">${state.weekly.map(x=>{const s=K.famSentBy[x.id];return `<button class="fchip ${s?'sent':''} ${x.fee?'fee':''}" data-fam="${x.id}" style="--c:${x.color||'#F5C9D4'}"><span class="fn">${esc(x.name)}</span><b>${peso(x.amount)}</b><span class="fs">${s?'✓ sent '+fD(s.date):'tap when sent'}</span></button>`}).join('')}</div>`;
@@ -1040,19 +1058,20 @@ function renderWeek(){
  $('#planTop').innerHTML=`<div class="hand" style="font-size:21px;color:var(--deep);line-height:1">set aside this week</div>
  <div class="big">${K.stillToSave?peso(K.stillToSave):'all set ♡'}</div>
  <div class="muted" style="font-size:12px;font-weight:600">goal ${peso(K.target)} · done ${peso(K.setAsideDone)} · ${fD(K.wS)}–${fD(K.wE)}</div>
+ ${K.short?`<div class="flagbox" style="margin-top:8px;background:#fff">⚠ This week needs more than your salary after siblings (${peso(K.afterSibs)}) — <b>short ${peso(K.short)}</b>.${K.bigDue?` Biggest: ${esc(K.loanById[K.bigDue.s.loanId].name)} ${peso(K.bigDue.s.amount)} due ${fD(K.bigDue.s.date)}.`:''} Already paid? Log it and this drops.</div>`:''}
  <div style="display:flex;gap:8px;margin-top:10px;align-items:center"><button class="btn pink" data-act="deposit">I set it aside ✓</button><span class="muted" style="font-size:11.5px">so every due date is ready before it arrives</span></div>`;
  const mx=Math.max(...K.next4,1);
  const items=K.plan.filter(x=>x.need>0&&!x.paid&&x.st<4);
  $('#planList').innerHTML=`<div class="jarrow"><div class="jar"><i style="height:${Math.min(100,K.jarBal/Math.max(1,K.next4[0]+K.next4[1])*50)}%"></i><span>♡</span></div>
  <div style="flex:1"><div class="hand" style="font-size:19px;color:var(--ink2);line-height:1">savings jar</div><div class="serif" style="font-size:24px;font-weight:700;color:var(--moss)">${peso(K.jarBal)}</div><div class="muted" style="font-size:11.5px">used first for your earliest dues — tick “from my savings jar” when you pay</div></div></div>
- <div class="wk4">${K.next4.map((v,i)=>{const x=new Date(pd(K.wS));x.setDate(x.getDate()+7*i);return `<div><span class="v">${pesoK(v)}</span><span class="b" style="height:${v/mx*100}%"></span><span class="l">${i?fD(ds(x)):'this wk'}</span></div>`}).join('')}</div>
+ <div class="wk4">${K.next4.map((v,i)=>{const x=new Date(pd(K.wS));x.setDate(x.getDate()+7*i);return `<div><span class="v" style="${K.tightWeeks[i]?'color:#b4536f':''}">${pesoK(v)}${K.tightWeeks[i]?' !':''}</span><span class="b" style="height:${v/mx*100}%;${K.tightWeeks[i]?'background:repeating-linear-gradient(45deg,#D47F98 0 5px,#E7A0B5 5px 10px)':''}"></span><span class="l">${i?fD(ds(x)):'this wk'}</span></div>`}).join('')}</div>
  <div class="hand" style="font-size:18px;color:var(--ink2);margin:6px 0 4px">where it goes</div>
  <div class="hist">${items.slice(0,14).map(x=>{const l=K.loanById[x.s.loanId];return `<div class="hrow" style="--c:${l.color};grid-template-columns:1fr auto"><div><b>${esc(l.short)} · ${fD(x.s.date)}</b><small>${peso(x.s.amount)}${x.covered?' · '+peso(x.covered)+' already in jar':''} · ${x.st?'starts in '+x.st+' wk'+(x.st>1?'s':''):(x.w)+' wk'+(x.w>1?'s':'')+' to go'}</small></div><span class="amt">${peso(Math.round(x.per))}<small style="display:inline;font-family:Quicksand"> /wk</small></span></div>`}).join('')}</div>`;
 }
 async function askBestie(d){
  if(!sampler||bestieBusy)return;const ci=state.checkins.find(c=>c.date===d);if(!ci)return;
  const J=judge(d);bestieBusy=true;const btn=$('#askBestie');if(btn)btn.disabled=true;$('#bestieText').textContent='thinking… ♡';
- const data={date:d,items:J.items.map(p=>({item:p.item,amount:p.amount/100,category:p.category,type:p.need||'need'})),totalSpent:J.spent/100,okToSpendThatDay:Math.max(0,J.allow)/100,weeklyBudget:K.budget/100,freeLeftThisWeek:K.free/100,stillToSetAsideThisWeek:K.stillToSave/100,siblingsWeeklySupport:state.weekly.map(x=>({name:x.name,amount:x.amount/100,sentThisWeek:!!K.famSentBy[x.id]})),savingsJar:K.jarBal/100,
+ const data={date:d,items:J.items.map(p=>({item:p.item,amount:p.amount/100,category:p.category,type:p.need||'need'})),totalSpent:J.spent/100,okToSpendThatDay:Math.max(0,J.allow)/100,weeklySalary:K.budget/100,moneyOnHand:state.money.updatedAt?{total:moneyTotal()/100,cash:(state.money.cash||0)/100,banks:state.money.banks.map(b=>({name:b.name,amount:b.amount/100})),asOf:new Date(state.money.updatedAt).toISOString()}:null,salaryAfterSiblings:K.afterSibs/100,shortThisWeek:K.short/100,freeLeftThisWeek:K.free/100,stillToSetAsideThisWeek:K.stillToSave/100,siblingsWeeklySupport:state.weekly.map(x=>({name:x.name,amount:x.amount/100,sentThisWeek:!!K.famSentBy[x.id]})),savingsJar:K.jarBal/100,
   nextDues:K.upcoming.filter(s=>s.date>=K.t).slice(0,4).map(s=>({name:K.loanById[s.loanId].name,date:s.date,amount:s.amount/100})),mood:ci.mood||'',note:ci.note||'',boardVerdict:J.label};
  const prompt=`You are a warm, playful "money bestie" inside a personal budget board for a young woman in the Philippines who is paying off several small loans and a laptop. Reply in 2–4 short sentences, casual and kind (a little Taglish is fine), no lists, no headings, no emojis. Say clearly whether this day's spending was okay or hurt the pocket, give ONE specific, practical tip based on the data (for example which item to cut, how much to move to her savings jar, or what to keep for an upcoming due date), and end with a short encouraging line. Use ₱ amounts from the data only; never invent numbers. If her note or mood suggests stress, be gentle.\n\nDATA:\n${JSON.stringify(data)}`;
  try{const r=await sampler(prompt,{modelTier:'quick',onText:({text})=>{$('#bestieText').textContent=text}});
@@ -1077,6 +1096,32 @@ function doCheckin(){
  printReceipt({no:ci.receiptNo,date:d,title:'DAILY CHECK-IN',lines:J.items.length?J.items.map((p,i)=>`<div class="ln"><span>${String(i+1).padStart(2,'0')} ${esc(p.item)}</span><span>${(p.amount/100).toFixed(2)}</span></div>`):['<div class="sm">no-spend day ✿</div>'],
   rows:[['TOTAL',peso(J.spent),1],...(K.budget?[['OK FOR THE DAY',peso(Math.max(0,J.allow))]]:[]),['MOOD',ci.mood||'—'],['VERDICT',J.label.toUpperCase()]]});
 }
+function moneyHTML(){
+ const m=state.money,tot=moneyTotal(),need=K.stillToSave+K.famLeft,left=tot-need;
+ if(!m.updatedAt)return `<h2><span class="script">my</span> money <small><button class="btn tiny pink" data-act="money">add cash &amp; bank</button></small></h2><div class="muted" style="font-size:12.5px">Type how much cash you have and what's in each bank — I'll check it against what this week still needs ♡</div>`;
+ const ago=Math.round((Date.now()-m.updatedAt)/36e5);
+ return `<h2><span class="script">my</span> money <small>as of ${new Date(m.updatedAt).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})} · <button class="linkb" data-act="money">update</button></small></h2>
+ <div class="mrow2"><div class="mtot"><span class="k">total on hand</span><b>${peso(tot)}</b></div>
+ <div class="mlist"><span class="mi cash"><span>cash</span><b>${peso(m.cash||0)}</b></span>${m.banks.map(b=>`<span class="mi"><span>${esc(b.name)}</span><b>${peso(b.amount||0)}</b></span>`).join('')}</div></div>
+ <div class="mcov ${left<0?'neg':''}">${need?`this week still needs <b>${peso(need)}</b> (dues ${peso(K.stillToSave)} · siblings ${peso(K.famLeft)}) — ${left>=0?`covered ✓ with <b>${peso(left)}</b> left`:`<b>short ${peso(-left)}</b>`}`:`nothing left to cover this week ✓`}${ago>=48?' · <span class="flag">update your balances?</span>':''}</div>`;
+}
+function openMoney(){
+ const m=state.money;let banks=m.banks.map(b=>({...b}));if(!banks.length)banks=[{id:'b'+uid(),name:'',amount:0}];
+ const draw=()=>{
+  modal(`<h3>my money</h3><div class="sub">what you have right now — cash and each bank / e-wallet</div>
+  <form class="form" id="monForm"><label>cash on hand (₱)<input id="mCash" type="number" step="0.01" min="0" value="${m.cash?(m.cash/100).toFixed(2):''}" placeholder="0.00"></label>
+  ${banks.map((b,i)=>`<div class="row2" style="grid-template-columns:1fr 120px 28px;align-items:end"><label>${i?'':'bank / e-wallet name'}<input class="mbn" data-i="${i}" value="${esc(b.name)}" maxlength="30" placeholder="e.g. BPI, GCash, Maya"></label><label>${i?'':'balance (₱)'}<input class="mba" type="number" step="0.01" min="0" value="${b.amount?(b.amount/100).toFixed(2):''}" placeholder="0.00"></label><button type="button" class="linkb mdel" data-i="${i}">×</button></div>`).join('')}
+  <button type="button" class="btn soft tiny" id="mAdd" style="align-self:flex-start">+ add another bank</button>
+  ${state.moneyLog.length?`<div class="muted" style="font-size:11.5px">last saved: ${peso(state.moneyLog[state.moneyLog.length-1].total)} on ${new Date(state.moneyLog[state.moneyLog.length-1].at).toLocaleString()}</div>`:''}
+  <div class="acts"><button class="btn pink">save ♡</button></div></form>`);
+  const grab=()=>{const ns=$$('#monForm .mbn'),as=$$('#monForm .mba');banks=ns.map((n,i)=>({id:banks[i].id,name:n.value.trim(),amount:C(as[i].value||0)}));m._cashDraft=$('#mCash').value};
+  $('#mAdd').onclick=()=>{grab();banks.push({id:'b'+uid(),name:'',amount:0});const c=m._cashDraft;draw();$('#mCash').value=c};
+  $$('#monForm .mdel').forEach(b=>b.onclick=()=>{grab();banks.splice(+b.dataset.i,1);const c=m._cashDraft;draw();$('#mCash').value=c});
+  $('#monForm').onsubmit=e=>{e.preventDefault();grab();delete m._cashDraft;m.cash=C($('#mCash').value||0);m.banks=banks.filter(b=>b.name||b.amount);m.updatedAt=Date.now();
+   state.moneyLog.push({at:m.updatedAt,cash:m.cash,banks:m.banks.map(b=>({name:b.name,amount:b.amount})),total:moneyTotal()});if(state.moneyLog.length>200)state.moneyLog.shift();
+   commit();closeModal();toast('saved · '+peso(moneyTotal())+' on hand ♡')};
+ };draw();
+}
 function famToggle(id){
  const it=state.weekly.find(x=>x.id===id);if(!it)return;const s=K.famSentBy[id];
  if(s){modal(`<h3>undo “sent”?</h3><div class="sub">${esc(it.name)} · ${peso(s.amount)} · ${fDL(s.date)}</div><div class="flagbox">It stays in your history (crossed out) and goes back to “still to send”.</div><div class="acts"><button class="btn soft" data-reprint="fam:${s.id}">see receipt</button><button class="btn soft" data-act="close">keep it</button><button class="btn pink" id="fUndo">undo</button></div>`);
@@ -1100,7 +1145,7 @@ function famEdit(){
  $$('#famEd .fdel').forEach(b=>b.onclick=()=>{state.weekly=state.weekly.filter(x=>x.id!==b.dataset.i);famEdit()});
  $('#famEd').onsubmit=e=>{e.preventDefault();const ns=$$('#famEd .fn'),as=$$('#famEd .fa');ns.forEach((n,i)=>{const w=state.weekly.find(x=>x.id===n.dataset.i);w.name=n.value.trim()||w.name;w.amount=C(as[i].value||0)});state.weekly=state.weekly.filter(x=>x.amount>0);commit();closeModal();toast('saved ♡')};
 }
-document.addEventListener('click',e=>{const f=e.target.closest('[data-fam]');if(f)famToggle(f.dataset.fam);const a=e.target.closest('[data-act="famedit"]');if(a)famEdit()});
+document.addEventListener('click',e=>{const mo=e.target.closest('[data-act="money"],#moneychip');if(mo){openMoney();return}const f=e.target.closest('[data-fam]');if(f)famToggle(f.dataset.fam);const a=e.target.closest('[data-act="famedit"]');if(a)famEdit()});
 $('#ciDate').onchange=e=>{ciDate=e.target.value&&e.target.value<=K.t?e.target.value:K.t;renderWeek()};
 $('#ciNeedSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;ciNeed=b.dataset.n;renderWeek()};
 $('#ciMoods').onclick=e=>{const b=e.target.closest('[data-mood]');if(!b)return;ciMood=ciMood===b.dataset.mood?null:b.dataset.mood;renderWeek()};
